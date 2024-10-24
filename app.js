@@ -125,15 +125,38 @@ app.post("/signin",(req,res)=>{
 })
 
 
+// app.get("/gyms", async (req, res) => {
+//     try {
+//         // Fetch all gyms from the database
+//         let gyms = await gymModel.find({}, 'name location price rating images latitude longitude'); // Select only the fields you need
+//         res.json({ status: "success", gyms });
+//     } catch (error) {
+//         res.status(500).json({ status: "error", message: error.message });
+//     }
+// });
+
 app.get("/gyms", async (req, res) => {
     try {
-        // Fetch all gyms from the database
-        let gyms = await gymModel.find({}, 'name location price rating images latitude longitude'); // Select only the fields you need
+        const searchQuery = req.query.location || ""; // Get the 'location' query parameter, if provided
+
+        let gyms;
+        if (searchQuery) {
+            // If a search query is provided, filter gyms by location (case-insensitive)
+            gyms = await gymModel.find(
+                { location: { $regex: searchQuery, $options: "i" } }, 
+                'name location price rating images latitude longitude'
+            );
+        } else {
+            // If no search query is provided, return all gyms
+            gyms = await gymModel.find({}, 'name location price rating images latitude longitude');
+        }
+
         res.json({ status: "success", gyms });
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }
 });
+
 
 
 

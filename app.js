@@ -26,10 +26,36 @@ const generateHashedPassword = async(password)=>{
 mongoose.connect("mongodb+srv://justin:nitsuj21@cluster0.3jf2qw3.mongodb.net/gymappdb?retryWrites=true&w=majority&appName=Cluster0")
 
 
+// app.post("/admin/add-gym", async (req, res) => {
+//     try {
+//         let input = req.body; // Get the gym details from the request body
+//         // console.log("input")
+//         // Create a new gym instance with the input data
+//         let gym = new gymModel({
+//             name: input.name,
+//             location: input.location,
+//             price: input.price,
+//             equipments: input.equipments, // Ensure this is an array if you're passing multiple equipments
+//             rating: input.rating || null, // Optional field, will be null if not provided
+//             images: input.images || [] // Optional field for images, set to an empty array if not provided
+//         });
+
+//         // Save the gym details in MongoDB
+//         await gym.save();
+
+//         // Send a success response to the admin
+//         res.json({ "status": "success", "gym": gym });
+//     } catch (error) {
+//         // Handle errors and send an error response
+//         res.status(500).json({ "status": "error", "message": error.message });
+//     }
+// });
+
 app.post("/admin/add-gym", async (req, res) => {
     try {
         let input = req.body; // Get the gym details from the request body
-        // console.log("input")
+        // console.log(input)
+        
         // Create a new gym instance with the input data
         let gym = new gymModel({
             name: input.name,
@@ -37,7 +63,9 @@ app.post("/admin/add-gym", async (req, res) => {
             price: input.price,
             equipments: input.equipments, // Ensure this is an array if you're passing multiple equipments
             rating: input.rating || null, // Optional field, will be null if not provided
-            images: input.images || [] // Optional field for images, set to an empty array if not provided
+            images: input.images || [], // Optional field for images, set to an empty array if not provided
+            latitude: input.latitude, // Extract latitude from input
+            longitude: input.longitude // Extract longitude from input
         });
 
         // Save the gym details in MongoDB
@@ -100,7 +128,7 @@ app.post("/signin",(req,res)=>{
 app.get("/gyms", async (req, res) => {
     try {
         // Fetch all gyms from the database
-        let gyms = await gymModel.find({}, 'name location price rating images'); // Select only the fields you need
+        let gyms = await gymModel.find({}, 'name location price rating images latitude longitude'); // Select only the fields you need
         res.json({ status: "success", gyms });
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });

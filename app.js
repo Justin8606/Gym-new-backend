@@ -270,6 +270,31 @@ app.post("/gyms/:id/rate", async (req, res) => {
 });
 
 
+//after rating
+
+app.get("/users", async (req, res) => {
+    try {
+        // Fetch only name and email for all users
+        const users = await userModel.find({}, 'name email');
+        res.json({ status: "success", users });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+app.get("/users/:id", async (req, res) => {
+    try {
+        const userId = req.params.id;
+        // Find the user by ID and project only the name and email fields
+        const user = await userModel.findById(userId, 'name email');
+        if (!user) {
+            return res.status(404).json({ status: "error", message: "User not found" });
+        }
+        res.json({ status: "success", user });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
 
 
 

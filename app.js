@@ -65,7 +65,13 @@ app.post("/admin/add-gym", async (req, res) => {
             rating: input.rating || null, // Optional field, will be null if not provided
             images: input.images || [], // Optional field for images, set to an empty array if not provided
             latitude: input.latitude, // Extract latitude from input
-            longitude: input.longitude // Extract longitude from input
+            longitude: input.longitude, // Extract longitude from input
+            equipments: input.equipments,
+            specialFacilities: input.specialFacilities,
+            classesOffered: input.classesOffered,
+            personalTrainers: input.personalTrainers,
+            lockerRoom: input.lockerRoom,
+            showers: input.showers
         });
 
         // Save the gym details in MongoDB
@@ -148,7 +154,7 @@ app.get("/gyms", async (req, res) => {
             );
         } else {
             // If no search query is provided, return all gyms
-            gyms = await gymModel.find({}, 'name location price rating images latitude longitude');
+            gyms = await gymModel.find({}, 'name location price rating images latitude longitude equipments specialFacilities classesOffered personalTrainers lockerRoom showers');
         }
 
         res.json({ status: "success", gyms });
@@ -156,6 +162,21 @@ app.get("/gyms", async (req, res) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 });
+
+
+app.get("/gyms/:id", async (req, res) => {
+    try {
+      const gymId = req.params.id;
+      const gym = await gymModel.findById(gymId);
+      if (!gym) {
+        return res.status(404).json({ status: "error", message: "Gym not found" });
+      }
+      res.json({ status: "success", gym });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  });
+  
 
 
 

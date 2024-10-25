@@ -176,7 +176,98 @@ app.get("/gyms/:id", async (req, res) => {
       res.status(500).json({ status: "error", message: error.message });
     }
   });
+
+
+//   app.post("/gyms/:id/rate", async (req, res) => {
+//     try {
+//         if (isNaN(rating) || rating < 1 || rating > 5) {
+//             return res.status(400).json({ status: "error", message: "Invalid rating value. Rating must be a number between 1 and 5." });
+//           }
+          
+
+//         const gymId = req.params.id;
+//         const { userId, rating } = req.body;
+
+//         // Validate rating value
+//         if (rating < 1 || rating > 5) {
+//             return res.status(400).json({ status: "error", message: "Rating must be between 1 and 5." });
+//         }
+
+//         // Find the gym and add or update user's rating
+//         const gym = await gymModel.findById(gymId);
+//         if (!gym) {
+//             return res.status(404).json({ status: "error", message: "Gym not found." });
+//         }
+
+//         // Check if the user has already rated this gym
+//         const existingRating = gym.ratings.find((r) => r.userId.toString() === userId);
+//         if (existingRating) {
+//             existingRating.rating = rating;  // Update existing rating
+//         } else {
+//             gym.ratings.push({ userId, rating });  // Add new rating
+//         }
+
+//         // Calculate the new average rating
+//         const totalRatings = gym.ratings.length;
+//         const avgRating = gym.ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+//         gym.rating = avgRating;  // Update average rating
+
+//         await gym.save();  // Save the updated gym
+
+//         res.json({ status: "success", message: "Rating added successfully.", gym });
+//     } catch (error) {
+//         res.status(500).json({ status: "error", message: error.message });
+//     }
+// });
+
   
+app.post("/gyms/:id/rate", async (req, res) => {
+    try {
+        const gymId = req.params.id;
+        const { userId, userRating } = req.body; // Rename `rating` to `userRating`
+
+        // Validate the userRating value
+        if (userRating < 1 || userRating > 5) {
+            return res.status(400).json({ status: "error", message: "Rating must be between 1 and 5." });
+        }
+
+        // Find the gym by ID
+        const gym = await gymModel.findById(gymId);
+        if (!gym) {
+            return res.status(404).json({ status: "error", message: "Gym not found." });
+        }
+
+        // Check if the user has already rated this gym
+        const existingRating = gym.ratings.find((r) => r.userId.toString() === userId);
+        if (existingRating) {
+            // Update the existing rating
+            existingRating.rating = userRating;
+        } else {
+            // Add a new rating
+            gym.ratings.push({ userId, rating: userRating });
+        }
+
+        // Recalculate the average rating only if there are ratings
+        let avgRating = 0;
+        if (gym.ratings.length > 0) {
+            const totalRatings = gym.ratings.length;
+            avgRating = gym.ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+        }
+        gym.rating = avgRating; // Update the average rating field
+
+        // Save the updated gym
+        await gym.save();
+
+        res.json({
+            status: "success",
+            message: "Rating added successfully.",
+            avgRating: gym.rating,
+            totalRatings: gym.ratings.length,
+        });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
 
 
 

@@ -11,6 +11,12 @@ const {userModel} = require("./models/user")
 const gym = require("./models/gym")
 const {gymModel} = require("./models/gym")
 
+const booking = require("./models/booking")
+const {bookingModel} = require("./models/booking")
+
+const notification = require("./models/notification")
+const {notificationModel} = require("./models/notification")
+
 
 
 const app = express()
@@ -291,6 +297,190 @@ app.get("/users/:id", async (req, res) => {
             return res.status(404).json({ status: "error", message: "User not found" });
         }
         res.json({ status: "success", user });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+app.post("/bookings", async (req, res) => {
+    try {
+        const { userId, gymId, bookingDate, timeSlot } = req.body;
+
+        const newBooking = new bookingModel({
+            userId,
+            gymId,
+            bookingDate,
+            timeSlot,
+        });
+
+        await newBooking.save();
+        res.status(201).json({ status: "success", message: "Booking created successfully", booking: newBooking });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// Retrieve bookings for a specific user
+app.get("/bookings/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const bookings = await bookingModel.find({ userId }).populate("gymId", "name location price"); // Populate gym details
+
+        res.json({ status: "success", bookings });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// Update booking status
+app.put("/bookings/:bookingId/status", async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const { status } = req.body;
+
+        // Check if the new status is valid
+        if (!["pending", "confirmed", "cancelled"].includes(status)) {
+            return res.status(400).json({ status: "error", message: "Invalid status" });
+        }
+
+        const updatedBooking = await bookingModel.findByIdAndUpdate(
+            bookingId,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedBooking) {
+            return res.status(404).json({ status: "error", message: "Booking not found" });
+        }
+
+        res.json({ status: "success", message: "Booking status updated successfully", booking: updatedBooking });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// Cancel a booking
+app.delete("/bookings/:bookingId", async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const deletedBooking = await bookingModel.findByIdAndDelete(bookingId);
+
+        if (!deletedBooking) {
+            return res.status(404).json({ status: "error", message: "Booking not found" });
+        }
+
+        res.json({ status: "success", message: "Booking cancelled successfully" });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+
+app.get("/bookings", async (req, res) => {
+    try {
+        const bookings = await bookingModel
+            .find()
+            .populate("userId", "name email")  // Populate user details (assuming these fields exist)
+            .populate("gymId", "name location price"); // Populate gym details
+
+        res.json({ status: "success", bookings });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 1. Create a new notification
+app.post("/notifications", async (req, res) => {
+    try {
+        const { userId, message, type } = req.body;
+
+        const newNotification = new notificationModel({
+            userId,
+            message,
+            type,
+            read: false // New notifications are unread by default
+        });
+
+        await newNotification.save();
+        res.status(201).json({ status: "success", message: "Notification created successfully", notification: newNotification });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// 2. Get all notifications for a specific user
+app.get("/notifications/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const notifications = await notificationModel.find({ userId });
+        
+        res.status(200).json({ status: "success", notifications });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// 3. Mark a notification as read
+app.put("/notifications/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const updatedNotification = await notificationModel.findByIdAndUpdate(
+            id,
+            { read: true },
+            { new: true }
+        );
+
+        if (!updatedNotification) {
+            return res.status(404).json({ status: "error", message: "Notification not found" });
+        }
+
+        res.status(200).json({ status: "success", message: "Notification marked as read", notification: updatedNotification });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
+// 4. Delete a notification
+app.delete("/notifications/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deletedNotification = await notificationModel.findByIdAndDelete(id);
+
+        if (!deletedNotification) {
+            return res.status(404).json({ status: "error", message: "Notification not found" });
+        }
+
+        res.status(200).json({ status: "success", message: "Notification deleted successfully" });
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }
